@@ -7,6 +7,7 @@ import com.itplh.absengine.script.AbstractCommonScript;
 import com.itplh.absengine.script.DelayVariable;
 import com.itplh.absengine.script.Result;
 import com.itplh.absengine.script.Script;
+import com.itplh.absengine.util.ElementUtils;
 import com.itplh.absengine.util.HttpUtils;
 import com.itplh.absengine.util.StringUtils;
 import lombok.Data;
@@ -57,6 +58,7 @@ public class FormSubmitScript extends AbstractCommonScript {
     public Result doExecute(Context context) {
         DelayVariable delayVariable = this.getDelayVariable();
         return HttpUtils.requestGet(context.baseUri(), delayVariable)
+                .flatMap(doc -> ElementUtils.selectForm(doc, multipleSelect))
                 .map(doc -> HttpUtils.formSubmit(doc, delayVariable, inputValues.toArray(new String[0])))
                 .map(Result::ok)
                 .orElse(Result.error());
