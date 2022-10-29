@@ -57,6 +57,23 @@ public class ElementUtils {
                 .findFirst();
     }
 
+    /**
+     * @param element
+     * @param select  当检索内容里出现多个匹配元素时，用此参数选择第几个，0表示随机选择一个，负数表示倒数第几个
+     * @return
+     */
+    public static Optional<Element> selectForm(Element element, int select) {
+        if (element == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(element.select("form[action]"))
+                .filter(CollectionUtils::isNotEmpty)
+                .map(els -> {
+                    int index = resolveIndex(els.size(), select);
+                    return els.get(index);
+                });
+    }
+
     private static int resolveIndex(int elementsSize, int select) {
         if (elementsSize < 1) {
             throw new RuntimeException("elementsSize is invalid, elementsSize: " + elementsSize);
