@@ -27,14 +27,24 @@ public class LinkAndFormUtils {
         if (element == null || value == null || value.length == 0) {
             return null;
         }
-        StringBuilder parameterBuilder = new StringBuilder("?");
         Elements inputs = selectInputs(element);
+        if (inputs.size() != value.length) {
+            String message = String.format("The form quantity is %s, but the parameter quantity is %s",
+                    inputs.size(), value.length);
+            throw new RuntimeException(message);
+        }
+        StringBuilder parameterBuilder = new StringBuilder("?");
         for (int i = 0; i < inputs.size(); i++) {
             Element input = inputs.get(i);
             String name = input.attr("name");
-            parameterBuilder.append((name)).append("=").append(value[i]).append("&");
+            if (StringUtils.hasText(name)) {
+                parameterBuilder.append((name)).append("=").append(value[i]).append("&");
+            }
         }
-        parameterBuilder.deleteCharAt(parameterBuilder.lastIndexOf("&"));
+        int lastIndex = parameterBuilder.length() - 1;
+        if (parameterBuilder.charAt(lastIndex) == '&') {
+            parameterBuilder.deleteCharAt(lastIndex);
+        }
         return parameterBuilder.toString();
     }
 
@@ -61,6 +71,7 @@ public class LinkAndFormUtils {
     private static String resolveFormMethod(Element element) {
         return ElementUtils.selectForm(element, 1)
                 .map(doc -> doc.attr("method"))
+                .filter(StringUtils::hasText)
                 .orElse(HttpUtils.METHOD_GET);
     }
 
@@ -70,7 +81,7 @@ public class LinkAndFormUtils {
         }
         return ElementUtils.selectForm(element, 1)
                 .map(Element::children)
-                .filter(e -> e.is("input[name]"))
+                .map(e -> e.select("input[name]"))
                 .orElse(new Elements());
     }
 
