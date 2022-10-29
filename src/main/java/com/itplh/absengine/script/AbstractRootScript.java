@@ -33,10 +33,10 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
         // hooks, before root populate
         executeHooks(script -> getBeforeRootPopulate());
 
+        this.simplePopulate(json, this);
         JSONObject jsonObject = JSON.parseObject(json);
         this.setId(1);
         this.setScriptTypeEnum(ScriptTypeEnum.ROOT);
-        this.simplePopulate(json, this);
         // set globalLoop
         Long loop = jsonObject.getLong(CommonScriptKeyEnum.循环次数.getValue());
         loop = loop == null || loop < 0 ? 1 : loop;
@@ -69,8 +69,6 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
 
         for (long i = 0; i < this.getGlobalLoop() || isForeverLoop(); i++) {
             long start = System.currentTimeMillis();
-            // real time update script
-            realtimeUpdate(this);
             // check terminal execute
             if (getTerminalExecute().test(context)) {
                 break;
@@ -81,6 +79,8 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
             this.getChild().forEach(Script::execute);
             // hooks, after sub execute
             executeHooks(script -> getAfterSubExecute());
+            // real time update script
+            realtimeUpdate(this);
             log.info("No.{} done, cost:{}ms {} {}", (i + 1), (System.currentTimeMillis() - start),
                     this.getScriptName(), this.getGlobalLoop());
         }
