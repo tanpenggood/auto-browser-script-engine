@@ -3,19 +3,24 @@ package com.itplh.absengine.util;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 public class LinkAndFormUtils {
 
     public static String resolveLinkURL(Element element, String linkText) {
+        if (!element.is("a[href]")) {
+            return null;
+        }
         String path = resolveLinkHref(element, linkText);
-        return resolveURL(element, path);
+        String baseUri = element.baseUri();
+        return resolveURL(baseUri, path);
     }
 
     public static String resolveFormURL(Element element) {
+        if (!element.is("form[action]")) {
+            return null;
+        }
         String path = resolveFormAction(element);
-        return resolveURL(element, path);
+        String baseUri = element.baseUri();
+        return resolveURL(baseUri, path);
     }
 
     public static String buildGetParameters(Element element, String... value) {
@@ -48,13 +53,13 @@ public class LinkAndFormUtils {
     }
 
     private static String resolveFormAction(Element element) {
-        return Optional.ofNullable(element.selectFirst("form[action]"))
+        return ElementUtils.selectForm(element, 1)
                 .map(doc -> doc.attr("action"))
                 .orElse("");
     }
 
     private static String resolveFormMethod(Element element) {
-        return Optional.ofNullable(element.selectFirst("form[method]"))
+        return ElementUtils.selectForm(element, 1)
                 .map(doc -> doc.attr("method"))
                 .orElse(HttpUtils.METHOD_GET);
     }
@@ -63,31 +68,27 @@ public class LinkAndFormUtils {
         if (element == null) {
             return new Elements();
         }
-        return element.selectFirst("form")
-                .children()
-                .stream()
+        return ElementUtils.selectForm(element, 1)
+                .map(Element::children)
                 .filter(e -> e.is("input[name]"))
-                .collect(Collectors.toCollection(Elements::new));
+                .orElse(new Elements());
     }
 
-    private static String resolveURL(Element element, String path) {
-        if (element == null || StringUtils.isBlank(path)) {
+    private static String resolveURL(String baseUri, String path) {
+        if (StringUtils.isBlank(baseUri) || StringUtils.isBlank(path)) {
             return null;
         }
-
-        String url = element.baseUri();
-        if (url.startsWith(HttpUtils.HTTP_SCHEMA)) {
-            url = url.substring(HttpUtils.HTTP_SCHEMA.length());
-            url = HttpUtils.HTTP_SCHEMA + url.substring(0, url.indexOf("/"));
+        if (baseUri.startsWith(HttpUtils.HTTP_SCHEMA)) {
+            baseUri = baseUri.substring(HttpUtils.HTTP_SCHEMA.length());
+            baseUri = HttpUtils.HTTP_SCHEMA + baseUri.substring(0, baseUri.indexOf("/"));
         }
-        if (url.startsWith(HttpUtils.HTTPS_SCHEMA)) {
-            url = url.substring(HttpUtils.HTTPS_SCHEMA.length());
-            url = HttpUtils.HTTPS_SCHEMA + url.substring(0, url.indexOf("/"));
+        if (baseUri.startsWith(HttpUtils.HTTPS_SCHEMA)) {
+            baseUri = baseUri.substring(HttpUtils.HTTPS_SCHEMA.length());
+            baseUri = HttpUtils.HTTPS_SCHEMA + baseUri.substring(0, baseUri.indexOf("/"));
         }
         path = path.startsWith("/") ? path : "/" + path;
-        url += path;
 
-        return url;
+        return baseUri + path;
     }
 
 }
