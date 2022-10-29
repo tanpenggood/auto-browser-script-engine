@@ -3,9 +3,10 @@ package com.itplh.absengine.script.impl;
 import com.itplh.absengine.context.Context;
 import com.itplh.absengine.script.AbstractRootScript;
 import com.itplh.absengine.script.Script;
+import com.itplh.absengine.util.AssertUtils;
+import com.itplh.absengine.util.CollectionUtils;
 import com.itplh.absengine.util.FileUtils;
 import com.itplh.absengine.util.JsonUtils;
-import com.itplh.absengine.util.StringUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,9 +20,7 @@ import java.util.stream.Collectors;
 public class RootScript extends AbstractRootScript {
 
     public static RootScript getInstance(String scriptName) {
-        if (StringUtils.isBlank(scriptName)) {
-            throw new RuntimeException("scriptName is invalid.");
-        }
+        AssertUtils.assertNotBlank(scriptName, "script name is required.");
         RootScript root = new RootScript();
         root.setScriptName(scriptName);
         Context context = Context.getContext();
@@ -32,6 +31,8 @@ public class RootScript extends AbstractRootScript {
     }
 
     public static Script load(Script root) {
+        AssertUtils.assertNotNull(root, "root is required.");
+        AssertUtils.assertNotBlank(root.getScriptName(), "script name is required.");
         if (root instanceof RootScript) {
             LongAdder load = ((RootScript) root).getLoad();
             if (load.intValue() > 0) {
@@ -39,7 +40,17 @@ public class RootScript extends AbstractRootScript {
             }
             ((RootScript) root).getLoad().increment();
         }
-        if (root.getChild() == null || root.getChild().isEmpty()) {
+        doLoad(root);
+
+        return root;
+    }
+
+    public Script load() {
+        return load(this);
+    }
+
+    private static void doLoad(Script root) {
+        if (CollectionUtils.isEmpty(root.getChild())) {
             root.setChild(new ArrayList<>());
         }
         String classpath = FileUtils.buildClasspath(root.getScriptName());
@@ -58,12 +69,6 @@ public class RootScript extends AbstractRootScript {
             }
             root.getChild().add(current);
         }
-
-        return root;
-    }
-
-    public Script load() {
-        return load(this);
     }
 
 }

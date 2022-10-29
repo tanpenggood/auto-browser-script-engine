@@ -2,6 +2,7 @@ package com.itplh.absengine.context;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.itplh.absengine.script.Script;
+import com.itplh.absengine.util.AssertUtils;
 import lombok.Data;
 import org.jsoup.nodes.Element;
 
@@ -26,9 +27,7 @@ public class Context {
     }
 
     public static Context initContext(Script script, Element element) {
-        if (script == null) {
-            throw new RuntimeException("script is required.");
-        }
+        AssertUtils.assertNotNull(script, "script is required.");
         Context context = new Context();
         context.setElement(element);
         context.setScript(script);

@@ -27,7 +27,7 @@ public enum TimeUnitEnum {
                 return timeUnitEnum.timeUnit;
             }
         }
-        throw new RuntimeException("don't support this time unit.");
+        throw new RuntimeException("don't support this time unit: " + timeUnitStr);
     }
 
 }

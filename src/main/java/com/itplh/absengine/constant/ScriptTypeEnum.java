@@ -33,7 +33,7 @@ public enum ScriptTypeEnum {
                 return scriptTypeEnum;
             }
         }
-        throw new RuntimeException("this type isn't supported");
+        throw new RuntimeException("don't support this type: " + type);
     }
 
 }

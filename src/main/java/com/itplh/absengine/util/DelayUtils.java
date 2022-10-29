@@ -10,9 +10,7 @@ public class DelayUtils {
     public static final TimeUnit DEFAULT_DELAY_TIME_UNIT = TimeUnit.MILLISECONDS;
 
     public static void delay(long timeout, TimeUnit timeUnit) {
-        if (timeUnit == null) {
-            throw new RuntimeException("timeUnit is required.");
-        }
+        AssertUtils.assertNotNull(timeUnit, "time unit is required.");
         try {
             timeUnit.sleep(timeout);
         } catch (InterruptedException e) {
