@@ -68,7 +68,7 @@ public class ClickTextScript extends AbstractCommonScript {
         String equalsClick = jsonObject.getString(ClickTextScriptKeyEnum.完全匹配点击.getValue());
         this.setEqualsClick("是".equals(equalsClick));
 
-        Integer minVersion = jsonObject.getInteger(ClickTextScriptKeyEnum.最低版本.getValue());
+        Integer minVersion = jsonObject.getIntValue(ClickTextScriptKeyEnum.最低版本.getValue());
         this.setMinVersion(minVersion);
 
         return this;
