@@ -53,7 +53,7 @@ public abstract class AbstractCommonScript extends AbstractLifeCycleScript {
                         this.getId(), result.isSuccess(), result.hasElement(),
                         this.getLoop(), this.getDelayVariable());
             } catch (Exception e) {
-                log.error("{}", e.getMessage());
+                log.error(e.getMessage(), e);
             }
             // fast fail
             if (result.isError()) {
