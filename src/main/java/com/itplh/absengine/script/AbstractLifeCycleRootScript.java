@@ -36,6 +36,6 @@ public abstract class AbstractLifeCycleRootScript extends AbstractHooksScript {
     /**
      * 终止脚本
      */
-    private Predicate<Context> terminalExecute;
+    private Predicate<Context> terminalExecute = (ctx) -> false;
 
 }
