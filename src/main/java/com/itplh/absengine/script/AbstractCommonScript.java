@@ -4,19 +4,22 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.itplh.absengine.constant.CommonScriptKeyEnum;
 import com.itplh.absengine.context.Context;
+import com.itplh.absengine.util.HttpUtils;
+import com.itplh.absengine.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.nodes.Element;
 
 import java.util.Optional;
 
 @Slf4j
-public abstract class AbstractCommonScript extends AbstractLifeCycleScript {
+public abstract class AbstractCommonScript extends AbstractLifeCycleScript implements ConsumerHooksHelper {
 
     @Override
     public Script populate(String json) {
         // real time update script
         realtimeUpdate(this);
         // hooks, before populate
-        executeHooks(script -> getBeforePopulate());
+        executeHooks(this, AbstractLifeCycleScript::getBeforePopulate);
 
         this.simplePopulate(json, this);
         JSONObject jsonObject = JSON.parseObject(json);
@@ -29,7 +32,7 @@ public abstract class AbstractCommonScript extends AbstractLifeCycleScript {
         doPopulate(jsonObject);
 
         // hooks, after populate
-        executeHooks(script -> getAfterPopulate());
+        executeHooks(this, AbstractLifeCycleScript::getAfterPopulate);
 
         return this;
     }
@@ -44,14 +47,21 @@ public abstract class AbstractCommonScript extends AbstractLifeCycleScript {
         for (int i = 0; i < this.getLoop(); i++) {
             Context context = getContext();
             // hooks, before execute
-            executeHooks(script -> getBeforeExecute());
+            executeHooks(this, AbstractLifeCycleScript::getBeforeExecute);
+            // real time update operate element, before execute
+            Element current = context.getElement();
+            if (current == null && StringUtils.hasText(context.baseUri())) {
+                current = HttpUtils.requestGet(context.baseUri(), this.getDelayVariable()).orElse(null);
+                realtimeUpdate(current);
+            }
             // do execute
             Result result = Result.error();
             try {
+
                 result = doExecute(context);
-                log.debug("Line.{} success:{} has element:{} loop:{} {}",
-                        this.getId(), result.isSuccess(), result.hasElement(),
-                        this.getLoop(), this.getDelayVariable());
+                log.debug("Line.{} success:{} element:{} loop:{} script:{} {}",
+                        this.getId(), result.isSuccess(), result.hasElement(), this.getLoop(),
+                        this.getScriptTypeEnum().getValue(), this.getDelayVariable());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -59,10 +69,10 @@ public abstract class AbstractCommonScript extends AbstractLifeCycleScript {
             if (result.isError()) {
                 break;
             }
-            // real time update element
+            // real time update operate element, after execute
             Optional.ofNullable(result.getElement()).ifPresent(this::realtimeUpdate);
             // hooks, after execute
-            executeHooks(script -> getAfterExecute());
+            executeHooks(this, AbstractLifeCycleScript::getAfterExecute);
         }
     }
 
