@@ -9,8 +9,12 @@ import com.itplh.absengine.script.Result;
 import com.itplh.absengine.script.Script;
 import com.itplh.absengine.util.ElementUtils;
 import com.itplh.absengine.util.HttpUtils;
+import com.itplh.absengine.util.StringUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.nodes.Element;
+
+import java.util.Optional;
 
 @Data
 @Slf4j
@@ -77,14 +81,25 @@ public class ClickTextScript extends AbstractCommonScript {
     @Override
     public Result doExecute(Context context) {
         DelayVariable delayVariable = this.getDelayVariable();
-        return HttpUtils.requestGet(context.baseUri(), delayVariable)
+        String[] finalKeyword = {""};
+        return Optional.ofNullable(context.getElement())
                 .flatMap(doc -> {
-                    if (equalsClick) {
-                        return ElementUtils.selectLinkByEquals(doc, clickText, multipleSelect);
+                    if (StringUtils.isBlank(clickText)) {
+                        return Optional.empty();
                     }
-                    return ElementUtils.selectLinkByLike(doc, clickText, multipleSelect);
+                    Optional<Element> elementOptional = Optional.empty();
+                    String[] keywords = clickText.split(";");
+                    for (String keyword : keywords) {
+                        elementOptional = equalsClick ? ElementUtils.selectLinkByEquals(doc, keyword, multipleSelect)
+                                : ElementUtils.selectLinkByLike(doc, keyword, multipleSelect);
+                        if (elementOptional.isPresent()) {
+                            finalKeyword[0] = keyword;
+                            return elementOptional;
+                        }
+                    }
+                    return elementOptional;
                 })
-                .map(doc -> HttpUtils.clickLink(doc, clickText, delayVariable))
+                .map(doc -> HttpUtils.clickLink(doc, finalKeyword[0], delayVariable))
                 .map(Result::ok)
                 .orElse(Result.error());
     }
