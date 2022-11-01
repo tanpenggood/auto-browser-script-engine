@@ -17,6 +17,7 @@ public class HttpUtils {
 
     public static final String HTTP_SCHEMA = "http://";
     public static final String HTTPS_SCHEMA = "https://";
+    public static final String ABSOLUTE_SCHEMA = "//";
     public static final String METHOD_GET = "get";
     public static final String METHOD_POST = "post";
 
@@ -33,15 +34,19 @@ public class HttpUtils {
         if (StringUtils.isBlank(url)) {
             return null;
         }
-        // The first time
+        // The first time request
         Connection connection = connection1(url, 1, delayVariable);
-        // The second time, fail retry
+        // The second time request, if fail
         if (connection == null) {
             connection = connection1(url, 2, delayVariable);
         }
-        // The third time, fail retry
+        // The third time request, if fail
         if (connection == null) {
             connection = connection1(url, 3, delayVariable);
+        }
+        // The fourth time request, if fail
+        if (connection == null) {
+            connection = connection1(url, 4, delayVariable);
         }
         return connection;
     }
@@ -86,11 +91,18 @@ public class HttpUtils {
                 DelayUtils.delay(delayVariable);
                 break;
             default:
-                DelayUtils.delay(61L, TimeUnit.SECONDS);
+                DelayUtils.delay(21L, TimeUnit.SECONDS);
                 break;
         }
+
         Connection connection = null;
         try {
+            if (url.startsWith(HTTP_SCHEMA) || url.startsWith(HTTPS_SCHEMA)) {
+            } else if (url.startsWith(ABSOLUTE_SCHEMA)) {
+                url = HTTP_SCHEMA + url.substring(ABSOLUTE_SCHEMA.length());
+            } else {
+                throw new RuntimeException();
+            }
             connection = Jsoup.connect(url).headers(headers).timeout(15000);
         } catch (Throwable e) {
             log.error("The {} time request fail, {}", requestTime, url);
