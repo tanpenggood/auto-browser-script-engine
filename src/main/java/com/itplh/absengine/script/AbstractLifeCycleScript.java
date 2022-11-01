@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.function.Consumer;
 
 @Data
-public abstract class AbstractLifeCycleScript extends AbstractHooksScript {
+public abstract class AbstractLifeCycleScript extends Script {
 
     private Consumer<Context> beforePopulate;
     private Consumer<Context> afterPopulate;

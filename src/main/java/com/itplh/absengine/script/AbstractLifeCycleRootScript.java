@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Data
-public abstract class AbstractLifeCycleRootScript extends AbstractHooksScript {
+public abstract class AbstractLifeCycleRootScript extends AbstractLifeCycleScript {
 
     /**
      * root脚本填充属性之前

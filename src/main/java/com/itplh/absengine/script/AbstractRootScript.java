@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 @Data
 @Slf4j
-public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
+public abstract class AbstractRootScript extends AbstractLifeCycleRootScript implements ConsumerHooksHelper {
 
     /**
      * 循环执行脚本列表的次数
@@ -31,7 +31,7 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
         // real time update script
         realtimeUpdate(this);
         // hooks, before root populate
-        executeHooks(script -> getBeforeRootPopulate());
+        executeRootHooks(this, AbstractLifeCycleRootScript::getBeforeRootPopulate);
 
         this.simplePopulate(json, this);
         JSONObject jsonObject = JSON.parseObject(json);
@@ -43,7 +43,7 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
         this.setGlobalLoop(loop);
 
         // hooks, after root populate
-        executeHooks(script -> getAfterRootPopulate());
+        executeRootHooks(this, AbstractLifeCycleRootScript::getAfterRootPopulate);
 
         return this;
     }
@@ -64,8 +64,9 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
         // real time update script
         realtimeUpdate(this);
         // hooks, before root execute
-        executeHooks(script -> getBeforeRootExecute());
-        log.info("{} {} {}", this.getScriptName(), this.getGlobalLoop(), this.getDelayVariable());
+        executeRootHooks(this, AbstractLifeCycleRootScript::getBeforeRootExecute);
+        log.info("{} loop:{} script:{} {}", this.getScriptName(), this.getGlobalLoop(),
+                this.getScriptTypeEnum().getValue(), this.getDelayVariable());
 
         for (long i = 0; i < this.getGlobalLoop() || isForeverLoop(); i++) {
             long start = System.currentTimeMillis();
@@ -74,19 +75,19 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript {
                 break;
             }
             // hooks, before sub execute
-            executeHooks(script -> getBeforeSubExecute());
+            executeRootHooks(this, AbstractLifeCycleRootScript::getBeforeSubExecute);
             // execute sub script list
             this.getChild().forEach(Script::execute);
             // hooks, after sub execute
-            executeHooks(script -> getAfterSubExecute());
+            executeRootHooks(this, AbstractLifeCycleRootScript::getAfterSubExecute);
             // real time update script
             realtimeUpdate(this);
-            log.info("No.{} done, cost:{}ms {} {}", (i + 1), (System.currentTimeMillis() - start),
-                    this.getScriptName(), this.getGlobalLoop());
+            log.info("No.{} {} done, cost:{}ms", (i + 1), this.getScriptName(),
+                    (System.currentTimeMillis() - start));
         }
 
         // hooks, after root execute
-        executeHooks(script -> getAfterRootExecute());
+        executeRootHooks(this, AbstractLifeCycleRootScript::getAfterRootExecute);
         // close resource
         remove();
         log.info("{} execute finish. {}", this.getScriptName(), context.baseUri());
