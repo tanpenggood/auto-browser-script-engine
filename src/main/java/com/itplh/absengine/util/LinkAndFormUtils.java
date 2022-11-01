@@ -10,6 +10,13 @@ public class LinkAndFormUtils {
             return null;
         }
         String path = resolveLinkHref(element, linkText);
+        if (path.startsWith(HttpUtils.HTTP_SCHEMA)
+                || path.startsWith(HttpUtils.HTTPS_SCHEMA)) {
+            return path;
+        }
+        if (path.startsWith(HttpUtils.ABSOLUTE_SCHEMA)) {
+            return HttpUtils.HTTP_SCHEMA + path.substring(HttpUtils.ABSOLUTE_SCHEMA.length());
+        }
         String baseUri = element.baseUri();
         return resolveURL(baseUri, path);
     }
