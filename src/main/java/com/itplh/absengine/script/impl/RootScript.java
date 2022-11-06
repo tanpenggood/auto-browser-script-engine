@@ -60,13 +60,12 @@ public class RootScript extends AbstractRootScript {
                 .collect(Collectors.toList());
         for (String json : allLines) {
             if (JsonUtils.isGlobalVariable(json)) {
-                root.populate(json);
+                if (root instanceof RootScript) {
+                    root.populate(json);
+                }
                 continue;
             }
             Script current = JsonUtils.convert2Script(json, root);
-            if (current instanceof ExecuteLocalSetScript) {
-                load(current);
-            }
             root.getChild().add(current);
         }
     }
