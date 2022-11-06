@@ -30,30 +30,23 @@ public class HttpUtils {
         headers.put("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko)");
     }
 
-    public static Connection connection(String url, DelayVariable delayVariable) {
-        if (StringUtils.isBlank(url)) {
-            return null;
-        }
+    public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
+        Connection connection = getConnection(url);
         // The first time request
-        Connection connection = connection1(url, 1, delayVariable);
+        Optional<Document> documentOptional = requestGet(connection, 1, delayVariable);
         // The second time request, if fail
-        if (connection == null) {
-            connection = connection1(url, 2, delayVariable);
+        if (hasNotResponse(connection)) {
+            documentOptional = requestGet(connection, 2, delayVariable);
         }
         // The third time request, if fail
-        if (connection == null) {
-            connection = connection1(url, 3, delayVariable);
+        if (hasNotResponse(connection)) {
+            documentOptional = requestGet(connection, 3, delayVariable);
         }
         // The fourth time request, if fail
-        if (connection == null) {
-            connection = connection1(url, 4, delayVariable);
+        if (hasNotResponse(connection)) {
+            documentOptional = requestGet(connection, 4, delayVariable);
         }
-        return connection;
-    }
-
-    public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
-        Connection connection = connection(url, delayVariable);
-        return requestGet(connection);
+        return documentOptional;
     }
 
     public static Element clickLink(Element element, String linkText, DelayVariable delayVariable) {
@@ -85,32 +78,29 @@ public class HttpUtils {
         return element;
     }
 
-    private static Connection connection1(String url, int requestTime, DelayVariable delayVariable) {
+    private static Connection getConnection(String url) {
+        if (StringUtils.isBlank(url)) {
+            return null;
+        }
+        if (url.startsWith(HTTP_SCHEMA) || url.startsWith(HTTPS_SCHEMA)) {
+        } else if (url.startsWith(ABSOLUTE_SCHEMA)) {
+            url = HTTP_SCHEMA + url.substring(ABSOLUTE_SCHEMA.length());
+        } else {
+            throw new RuntimeException();
+        }
+        return Jsoup.connect(url).headers(headers).timeout(15000);
+    }
+
+    private static Optional<Document> requestGet(Connection connection, int requestTime, DelayVariable delayVariable) {
         switch (requestTime) {
             case 1:
                 DelayUtils.delay(delayVariable);
                 break;
             default:
+                log.warn("After waiting for 21 seconds, retry the {}th time request.", requestTime);
                 DelayUtils.delay(21L, TimeUnit.SECONDS);
                 break;
         }
-
-        Connection connection = null;
-        try {
-            if (url.startsWith(HTTP_SCHEMA) || url.startsWith(HTTPS_SCHEMA)) {
-            } else if (url.startsWith(ABSOLUTE_SCHEMA)) {
-                url = HTTP_SCHEMA + url.substring(ABSOLUTE_SCHEMA.length());
-            } else {
-                throw new RuntimeException();
-            }
-            connection = Jsoup.connect(url).headers(headers).timeout(15000);
-        } catch (Throwable e) {
-            log.error("The {} time request fail, {}", requestTime, url);
-        }
-        return connection;
-    }
-
-    private static Optional<Document> requestGet(Connection connection) {
         return Optional.ofNullable(connection)
                 .map(con -> {
                     try {
@@ -119,6 +109,16 @@ public class HttpUtils {
                     }
                     return null;
                 });
+    }
+
+    private static boolean hasNotResponse(Connection connection) {
+        AssertUtils.assertNotNull(connection, "connection is required.");
+        try {
+            Connection.Response response = connection.response();
+            return response == null;
+        } catch (IllegalArgumentException e) {
+            return true;
+        }
     }
 
 }
