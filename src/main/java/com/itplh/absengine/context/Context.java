@@ -1,6 +1,7 @@
 package com.itplh.absengine.context;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.itplh.absengine.script.Result;
 import com.itplh.absengine.script.Script;
 import com.itplh.absengine.util.AssertUtils;
 import lombok.Data;
@@ -19,6 +20,10 @@ public class Context {
      * 当前操作的脚本
      */
     private Script script;
+    /**
+     * 当前脚本执行结果
+     */
+    private Result result;
 
     private JSONObject other = new JSONObject();
 
@@ -37,6 +42,14 @@ public class Context {
 
     public static Context getContext() {
         return Context.contextThreadLocal.get();
+    }
+
+    public Object put(String key, Object value) {
+        return this.other.put(key, value);
+    }
+
+    public boolean isSuccess() {
+        return this.other.getBooleanValue("success");
     }
 
 }
