@@ -34,8 +34,12 @@ public abstract class AbstractLifeCycleRootScript extends AbstractLifeCycleScrip
      */
     private Consumer<Context> afterSubExecute;
     /**
-     * 终止脚本
+     * 终止脚本执行
      */
-    private Predicate<Context> terminalExecute = (ctx) -> false;
+    private Predicate<Context> terminal = (ctx) -> false;
+    /**
+     * 终止脚本执行（从子脚本发出）
+     */
+    private Predicate<Context> terminalFromSub = (ctx) -> false;
 
 }
