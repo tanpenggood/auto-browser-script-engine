@@ -6,6 +6,7 @@ import com.itplh.absengine.annotation.NotNull;
 import com.itplh.absengine.constant.CommonScriptKeyEnum;
 import com.itplh.absengine.constant.ScriptTypeEnum;
 import com.itplh.absengine.context.Context;
+import com.itplh.absengine.util.CollectionUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,14 +50,14 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript imp
     }
 
     @Override
-    public void execute() {
+    public Result execute() {
         // check empty script
-        if (this.getChild() == null || this.getChild().isEmpty()) {
-            return;
+        if (CollectionUtils.isEmpty(this.getChild())) {
+            return Result.ok();
         }
         // check repeat execute script
         if (this.getExecute().intValue() > 0) {
-            return;
+            return Result.ok();
         }
         this.getExecute().increment();
 
@@ -68,29 +69,41 @@ public abstract class AbstractRootScript extends AbstractLifeCycleRootScript imp
         log.info("{} loop:{} script:{} {}", this.getScriptName(), this.getGlobalLoop(),
                 this.getScriptTypeEnum().getValue(), this.getDelayVariable());
 
+        boolean isTerminal = false;
+        boolean isTerminalFromSub = false;
+        Result result = Result.error();
         for (long i = 0; i < this.getGlobalLoop() || isForeverLoop(); i++) {
             long start = System.currentTimeMillis();
-            // check terminal execute
-            if (getTerminalExecute().test(context)) {
-                break;
-            }
             // hooks, before sub execute
             executeRootHooks(this, AbstractLifeCycleRootScript::getBeforeSubExecute);
             // execute sub script list
-            this.getChild().forEach(Script::execute);
+            for (Script script : this.getChild()) {
+                result = script.execute();
+                // check sub script terminal execute
+                isTerminalFromSub = getTerminalFromSub().test(context);
+                if (isTerminalFromSub) {
+                    break;
+                }
+            }
             // hooks, after sub execute
             executeRootHooks(this, AbstractLifeCycleRootScript::getAfterSubExecute);
             // real time update script
             realtimeUpdate(this);
             log.info("No.{} {} done, cost:{}ms", (i + 1), this.getScriptName(),
                     (System.currentTimeMillis() - start));
+            // check root script terminal execute or sub script terminal execute
+            isTerminal = getTerminal().test(context);
+            if (isTerminal || isTerminalFromSub) {
+                break;
+            }
         }
 
         // hooks, after root execute
         executeRootHooks(this, AbstractLifeCycleRootScript::getAfterRootExecute);
+        log.info("{} execute finish. {}", this.getScriptName(), context.baseUri());
         // close resource
         remove();
-        log.info("{} execute finish. {}", this.getScriptName(), context.baseUri());
+        return result;
     }
 
     private boolean isForeverLoop() {
