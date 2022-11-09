@@ -6,9 +6,6 @@ import org.jsoup.select.Elements;
 public class LinkAndFormUtils {
 
     public static String resolveLinkURL(Element element, String linkText) {
-        if (!element.is("a[href]")) {
-            return null;
-        }
         String path = resolveLinkHref(element, linkText);
         if (path.startsWith(HttpUtils.HTTP_SCHEMA)
                 || path.startsWith(HttpUtils.HTTPS_SCHEMA)) {
@@ -22,9 +19,6 @@ public class LinkAndFormUtils {
     }
 
     public static String resolveFormURL(Element element) {
-        if (!element.is("form[action]")) {
-            return null;
-        }
         String path = resolveFormAction(element);
         String baseUri = element.baseUri();
         return resolveURL(baseUri, path);
