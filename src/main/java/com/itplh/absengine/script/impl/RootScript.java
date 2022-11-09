@@ -53,7 +53,7 @@ public class RootScript extends AbstractRootScript {
         if (CollectionUtils.isEmpty(root.getChild())) {
             root.setChild(new ArrayList<>());
         }
-        String classpath = FileUtils.buildClasspath(root.getScriptName());
+        String classpath = FileUtils.buildScriptClasspath(root.getScriptName());
         List<String> allLines = FileUtils.readAllLines(classpath)
                 .stream()
                 .filter(line -> line.startsWith("{"))

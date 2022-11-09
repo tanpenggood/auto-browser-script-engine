@@ -16,7 +16,7 @@ public class FileUtils {
     public static final String CLASSPATH_PREFIX = "classpath:";
     public static final String SCRIPT_DIRECTORY = "auto-browser-script";
 
-    public static String buildClasspath(String scriptName) {
+    public static String buildScriptClasspath(String scriptName) {
         if (scriptName == null) {
             return null;
         }
