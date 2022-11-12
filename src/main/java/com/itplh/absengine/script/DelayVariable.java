@@ -2,11 +2,15 @@ package com.itplh.absengine.script;
 
 import com.itplh.absengine.annotation.Nullable;
 import com.itplh.absengine.util.DelayUtils;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.concurrent.TimeUnit;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DelayVariable {
 
     /**
