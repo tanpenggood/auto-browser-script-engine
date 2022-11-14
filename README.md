@@ -15,4 +15,16 @@
 
 # 快速开始
 
+# Maven Dependency
+
+在项目的pom.xml的dependencies中加入以下内容:
+
+```xml
+<dependency>
+  <groupId>com.itplh.opensource</groupId>
+  <artifactId>absengine</artifactId>
+  <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
 # 其他
