@@ -28,4 +28,8 @@ public class DelayVariable {
     @Nullable
     private TimeUnit delayTimeUnit = DelayUtils.DEFAULT_DELAY_TIME_UNIT;
 
+    public static DelayVariable defaultDelay() {
+        return new DelayVariable();
+    }
+
 }
