@@ -18,16 +18,11 @@ public class DelayUtils {
         }
     }
 
-    public static void defaultDelay() {
-        delay(DEFAULT_DELAY, DEFAULT_DELAY_TIME_UNIT);
-    }
-
     public static void delay(DelayVariable variable) {
         if (variable == null
                 || variable.getDelay() < 0
                 || variable.getDelayTimeUnit() == null) {
-            defaultDelay();
-            return;
+            variable = DelayVariable.defaultDelay();
         }
         long delay = variable.getDelay();
         TimeUnit delayTimeUnit = variable.getDelayTimeUnit();
