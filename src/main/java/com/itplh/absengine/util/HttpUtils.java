@@ -38,6 +38,7 @@ public class HttpUtils {
 
     public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
         Connection connection = getConnection(url);
+        delayVariable = delayVariable == null ? DelayVariable.defaultDelay() : delayVariable;
         Optional<Document> documentOptional = Optional.empty();
         // request, if fail retry max 5 time.
         for (int requestTime = 1;
@@ -91,7 +92,7 @@ public class HttpUtils {
     }
 
     private static Optional<Document> requestGet(Connection connection, int requestTime, DelayVariable delayVariable) {
-        delayVariable = requestTime > 2 ? retrySleepMapping.get(requestTime) : delayVariable;
+        delayVariable = retrySleepMapping.getOrDefault(requestTime, delayVariable);
         if (requestTime > 1) {
             log.warn("After waiting for {} {}, retry the {}th time request.",
                     delayVariable.getDelay(), delayVariable.getDelayTimeUnit(), requestTime);
