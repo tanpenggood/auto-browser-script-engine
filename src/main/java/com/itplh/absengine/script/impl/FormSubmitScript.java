@@ -14,6 +14,7 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class FormSubmitScript extends AbstractCommonScript {
@@ -57,7 +58,7 @@ public class FormSubmitScript extends AbstractCommonScript {
     @Override
     public Result doExecute(Context context) {
         DelayVariable delayVariable = this.getDelayVariable();
-        return HttpUtils.requestGet(context.baseUri(), delayVariable)
+        return Optional.ofNullable(context.getElement())
                 .flatMap(doc -> ElementUtils.selectForm(doc, multipleSelect))
                 .map(doc -> HttpUtils.formSubmit(doc, delayVariable, inputValues.toArray(new String[0])))
                 .map(Result::ok)
