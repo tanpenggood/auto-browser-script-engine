@@ -3,6 +3,11 @@ package com.itplh.absengine.util;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
+
 public class LinkAndFormUtils {
 
     public static String resolveLinkURL(Element element, String linkText) {
@@ -28,18 +33,20 @@ public class LinkAndFormUtils {
         if (element == null || value == null || value.length == 0) {
             return null;
         }
+        // set parameter default value as "", if necessary
+        List<String> values = new ArrayList<>(Arrays.asList(value));
         Elements inputs = selectInputs(element);
-        if (inputs.size() != value.length) {
-            String message = String.format("The form quantity is %s, but the parameter quantity is %s",
-                    inputs.size(), value.length);
-            throw new RuntimeException(message);
+        int end = inputs.size() - values.size();
+        if (end > 0) {
+            IntStream.range(0, end).forEach(n -> values.add(""));
         }
+        // build parameter
         StringBuilder parameterBuilder = new StringBuilder("?");
         for (int i = 0; i < inputs.size(); i++) {
             Element input = inputs.get(i);
             String name = input.attr("name");
             if (StringUtils.hasText(name)) {
-                parameterBuilder.append((name)).append("=").append(value[i]).append("&");
+                parameterBuilder.append((name)).append("=").append(values.get(i)).append("&");
             }
         }
         int lastIndex = parameterBuilder.length() - 1;
