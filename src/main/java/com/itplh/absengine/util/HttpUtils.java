@@ -36,8 +36,8 @@ public class HttpUtils {
         retrySleepMapping.put(5, new DelayVariable(31L, TimeUnit.SECONDS));
     }
 
-    public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
-        Connection connection = getConnection(url);
+    public static Optional<Document> requestGet(String url, Map<String, String> headers, DelayVariable delayVariable) {
+        Connection connection = getConnection(url, headers);
         delayVariable = delayVariable == null ? DelayVariable.defaultDelay() : delayVariable;
         Optional<Document> documentOptional = Optional.empty();
         // request, if fail retry max 5 time.
@@ -47,6 +47,10 @@ public class HttpUtils {
             documentOptional = requestGet(connection, requestTime, delayVariable);
         }
         return documentOptional;
+    }
+
+    public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
+        return requestGet(url, headers, delayVariable);
     }
 
     public static Element clickLink(Element element, String linkText, DelayVariable delayVariable) {
@@ -78,7 +82,7 @@ public class HttpUtils {
         return element;
     }
 
-    private static Connection getConnection(String url) {
+    private static Connection getConnection(String url, Map<String, String> headers) {
         if (StringUtils.isBlank(url)) {
             return null;
         }
