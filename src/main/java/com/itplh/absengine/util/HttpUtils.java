@@ -50,7 +50,7 @@ public class HttpUtils {
     }
 
     public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
-        return requestGet(url, headers, delayVariable);
+        return requestGet(url, HttpUtils.headers, delayVariable);
     }
 
     public static Element clickLink(Element element, String linkText, DelayVariable delayVariable) {
@@ -91,6 +91,9 @@ public class HttpUtils {
             url = HTTP_SCHEMA + url.substring(ABSOLUTE_SCHEMA.length());
         } else {
             throw new RuntimeException();
+        }
+        if (CollectionUtils.isEmpty(headers)) {
+            headers = HttpUtils.headers;
         }
         return Jsoup.connect(url).headers(headers).timeout(15000);
     }
