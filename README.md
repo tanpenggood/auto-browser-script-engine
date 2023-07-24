@@ -23,7 +23,7 @@
 <dependency>
   <groupId>com.itplh.opensource</groupId>
   <artifactId>absengine</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
 </dependency>
 ```
 
