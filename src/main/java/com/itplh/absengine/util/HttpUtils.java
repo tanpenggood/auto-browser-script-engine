@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class HttpUtils {
@@ -23,30 +22,17 @@ public class HttpUtils {
     public static final String METHOD_POST = "post";
 
     private static Map<String, String> headers = new HashMap<>();
-    private static Map<Integer, DelayVariable> retrySleepMapping = new HashMap<>();
 
     static {
         headers.put("Accept-Language", "zh-CN,zh;q=0.9");
         headers.put("Cache-Control", "max-age-0");
         headers.put("Connection", "keep-alive");
         headers.put("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko)");
-
-        retrySleepMapping.put(3, new DelayVariable(11L, TimeUnit.SECONDS));
-        retrySleepMapping.put(4, new DelayVariable(21L, TimeUnit.SECONDS));
-        retrySleepMapping.put(5, new DelayVariable(31L, TimeUnit.SECONDS));
     }
 
     public static Optional<Document> requestGet(String url, Map<String, String> headers, DelayVariable delayVariable) {
-        Connection connection = getConnection(url, headers);
-        delayVariable = delayVariable == null ? DelayVariable.defaultDelay() : delayVariable;
-        Optional<Document> documentOptional = Optional.empty();
-        // request, if fail retry max 5 time.
-        for (int requestTime = 1;
-             requestTime <= 5 && hasNotResponse(connection);
-             requestTime++) {
-            documentOptional = requestGet(connection, requestTime, delayVariable);
-        }
-        return documentOptional;
+        Connection connection = buildConnection(url, headers);
+        return enhanceRequestGet(connection, delayVariable);
     }
 
     public static Optional<Document> requestGet(String url, DelayVariable delayVariable) {
@@ -82,7 +68,7 @@ public class HttpUtils {
         return element;
     }
 
-    private static Connection getConnection(String url, Map<String, String> headers) {
+    private static Connection buildConnection(String url, Map<String, String> headers) {
         if (StringUtils.isBlank(url)) {
             return null;
         }
@@ -98,31 +84,30 @@ public class HttpUtils {
         return Jsoup.connect(url).headers(headers).timeout(15000);
     }
 
-    private static Optional<Document> requestGet(Connection connection, int requestTime, DelayVariable delayVariable) {
-        delayVariable = retrySleepMapping.getOrDefault(requestTime, delayVariable);
-        if (requestTime > 1) {
-            log.warn("After waiting for {} {}, retry the {}th time request.",
-                    delayVariable.getDelay(), delayVariable.getDelayTimeUnit(), requestTime);
-        }
-        switch (requestTime) {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-                DelayUtils.delay(delayVariable);
-                break;
-            default:
-                return Optional.empty();
-        }
+    /**
+     * enhance point
+     * 1. add delay before request
+     * 2. auto retry if request fail
+     *
+     * @param connection
+     * @param delayVariable
+     * @return
+     */
+    private static Optional<Document> enhanceRequestGet(Connection connection, DelayVariable delayVariable) {
         return Optional.ofNullable(connection)
-                .map(con -> {
-                    try {
-                        return con.get();
-                    } catch (IOException e) {
-                    }
-                    return null;
-                });
+                .map(con -> TryCatchUtil.ignoreException(() ->
+                        RetryUtil.retry(() -> {
+                            try {
+                                DelayUtils.delay(delayVariable);
+                                Document document = con.get();
+                                if (hasNotResponse(con)) {
+                                    throw new RuntimeException("no response");
+                                }
+                                return document;
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }, 5, delayVariable)));
     }
 
     private static boolean hasNotResponse(Connection connection) {
