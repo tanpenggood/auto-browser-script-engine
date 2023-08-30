@@ -1,20 +1,20 @@
 package com.itplh.absengine.util;
 
 import com.itplh.absengine.script.DelayVariable;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class DelayUtils {
-
-    public static final long DEFAULT_DELAY = 1500L;
-    public static final TimeUnit DEFAULT_DELAY_TIME_UNIT = TimeUnit.MILLISECONDS;
 
     public static void delay(long timeout, TimeUnit timeUnit) {
         AssertUtils.assertNotNull(timeUnit, "time unit is required.");
         try {
             timeUnit.sleep(timeout);
         } catch (InterruptedException e) {
-            // ignore
+            Thread.currentThread().interrupt();
+            log.info("Interrupted while sleeping.");
         }
     }
 
