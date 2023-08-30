@@ -10,7 +10,7 @@ public class RetryUtil {
 
     /***
      * 重试方法
-     * 对目标方法进行包装，当目标方法执行失败时，将会进行重试
+     * 对目标方法进行包装，当执行目标方法抛出异常时，将会进行重试
      * @param method 执行的目标方法
      * @param maxRetries 最大重试次数
      * @param firstRetryDelayVariable 执行第一次重试的延迟
